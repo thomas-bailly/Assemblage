@@ -151,15 +151,41 @@ def get_starting_nodes(graph):
     return(node_input)
 
 def get_sink_nodes(graph):
-    pass
+    node_output = []
+
+    for node in (list(graph.nodes)):
+        if len(list(graph.successors(node))) == 0:
+            node_output.append(node)
+            
+    return(node_output)
 
 def get_contigs(graph, starting_nodes, ending_nodes):
-    pass
+    path_list = []
+    contig_list = []
+    
+    for start in starting_nodes:
+        for end in ending_nodes:
+            path = (nx.all_simple_paths(graph, start, end))
+            path_list.append(path)
+            
+    for l in path_list:
+        for path in l:
+            contig = ""
+            for node in path:
+                contig += node
+                
+            contig_list.append((contig, len(contig)))
+            
+            
+    return(contig_list)
 
 def save_contigs(contigs_list, output_file):
-    pass
-
-
+    with open(output_file,"w") as out:
+        for i in range(0,len(contigs_list)):
+            out.write(">contig_{} len={}\n".format(i, contigs_list[i][1]))
+            
+            out.write("{}\n".format(fill(contigs_list[i][0])))
+            
 def fill(text, width=80):
     """Split text with a line return to respect fasta format"""
     return os.linesep.join(text[i:i+width] for i in range(0, len(text), width))
