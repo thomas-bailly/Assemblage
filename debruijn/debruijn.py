@@ -127,7 +127,8 @@ def select_best_path(graph, path_list, path_length, weight_avg_list,
     pass
 
 def path_average_weight(graph, path):
-    pass
+    avg_w = statistics.mean([d["weight"] for (u,v,d) in graph.subgraph(path).edges(data=True)])
+    return(avg_w)
 
 def solve_bubble(graph, ancestor_node, descendant_node):
     pass
@@ -171,11 +172,17 @@ def get_contigs(graph, starting_nodes, ending_nodes):
     for l in path_list:
         for path in l:
             contig = ""
-            for node in path:
-                contig += node
-                
-            contig_list.append((contig, len(contig)))
-            
+            #print(path)
+            #print(len(path))
+            for i in range(len(path)):
+                if i == 0:
+                    contig += path[i]
+                    #print(contig)
+                elif path[i][0] == path[i-1][-1]:
+                    contig += path[i][-1]
+                    #print(True)
+                    #print(contig)
+            contig_list.append((contig,len(contig)))
             
     return(contig_list)
 
