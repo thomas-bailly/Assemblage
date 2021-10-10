@@ -68,19 +68,51 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
-    pass
+    with open(fastq_file, "r") as fq:
+
+        content = fq.readlines()
+        for i in range(1, len(content),4):
+            yield content[i].strip()
 
 
 def cut_kmer(read, kmer_size):
-    pass
+    #elem = []
+    
+    #for r in read:
+        #elem.append(r)
+    i = 0
+    j = i+(kmer_size -1)
+    while j != len(read):
+        yield(read[i:j+1])
+        i += 1
+        j += 1
 
 
 def build_kmer_dict(fastq_file, kmer_size):
-    pass
+    #read = read_fastq(fastq_file)
+    #kmer_list = cut_kmer(read,kmer_size)
+
+    kmer_dict = {}
+
+    for read in read_fastq(fastq_file):
+        for kmer in cut_kmer(read, kmer_size):
+            if kmer not in kmer_dict:
+                kmer_dict[kmer] = 1
+            else :
+                kmer_dict[kmer] += 1
+
+    return(kmer_dict)
 
 
 def build_graph(kmer_dict):
-    pass
+
+    DG = nx.DiGraph()
+
+    for key in kmer_dict:
+
+        DG.add_edge(key[0:-1], key[1:], weight= kmer_dict[key])
+
+    return(DG)
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
@@ -110,7 +142,13 @@ def solve_out_tips(graph, ending_nodes):
     pass
 
 def get_starting_nodes(graph):
-    pass
+    node_input = []
+
+    for node in (list(graph.nodes)):
+        if len(list(graph.predecessors(node))) == 0:
+            node_input.append(node)
+
+    return(node_input)
 
 def get_sink_nodes(graph):
     pass
