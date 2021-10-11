@@ -24,13 +24,13 @@ random.seed(9001)
 from random import randint
 import statistics
 
-__author__ = "Thomas Bailly"
-__copyright__ = "Universite de Paris"
-__credits__ = ["Thomas Bailly"]
+__author__ = "Your Name"
+__copyright__ = "Universite Paris Diderot"
+__credits__ = ["Your Name"]
 __license__ = "GPL"
 __version__ = "1.0.0"
-__maintainer__ = "Thomas Bailly"
-__email__ = "thomas.bailly1698@gmail.com"
+__maintainer__ = "Your Name"
+__email__ = "your@email.fr"
 __status__ = "Developpement"
 
 def isfile(path):
@@ -68,6 +68,20 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
+    '''Read fastq file
+    
+    Read the lines containing the reads and return the reads
+    as a generator object.
+    
+    Argument
+    --------
+    fastq_file : file
+    
+    Return
+    ------
+    generator
+        the reads in fastq file
+    '''
     with open(fastq_file, "r") as fq:
 
         content = fq.readlines()
@@ -76,10 +90,24 @@ def read_fastq(fastq_file):
 
 
 def cut_kmer(read, kmer_size):
-    #elem = []
+    '''Cut the reads into kmer.
     
-    #for r in read:
-        #elem.append(r)
+    cuts reads into kmer with a sliding window, which generates X kmer to
+    parse the entire read.
+    
+    Arguments
+    ---------
+    read : string
+        one read in the generator object return by read_fastq
+    
+    kmer_size: int
+        size of kmer
+        
+    Return
+    ------
+    generator
+        the kmer in a read
+    '''
     i = 0
     j = i+(kmer_size -1)
     while j != len(read):
@@ -89,8 +117,22 @@ def cut_kmer(read, kmer_size):
 
 
 def build_kmer_dict(fastq_file, kmer_size):
-    #read = read_fastq(fastq_file)
-    #kmer_list = cut_kmer(read,kmer_size)
+    '''Build a dictionnary containing kmer
+    
+    For each kmer, count his occurence.
+    
+    Arguments
+    ---------
+    fastq_file : file
+    
+    kmer_size : int
+        size of kmer
+    
+    Return
+    ------
+    dict
+        dict containing the occurence of each kmer
+    '''
 
     kmer_dict = {}
 
@@ -105,6 +147,20 @@ def build_kmer_dict(fastq_file, kmer_size):
 
 
 def build_graph(kmer_dict):
+    '''Build a Graph
+    
+    Build a DiGraph object with the kmer_dict.
+    
+    Argument
+    --------
+    kmer_dict : dict
+        dict containing the occurence of each kmer
+    
+    Return
+    ------
+    DiGraph
+        The DiGraph build the kmer
+    '''
 
     DG = nx.DiGraph()
 
@@ -116,6 +172,28 @@ def build_graph(kmer_dict):
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
+    '''Remove some Path of a DiGraph
+    
+    Arguments
+    ---------
+    graph : DiGraph
+        The graph return by build_graph()
+        
+    path_list : generator
+        generator of path between nodes
+        
+    delete_entry_node : Boolean
+        option for delete the starting nodes or not
+        
+    delete_out_node : Boolean
+        option for delete the ending nodes or not
+        
+    Return
+    ------
+    DiGraph
+        DiGraph without some path
+    '''
+    
     for path in path_list:
         if (delete_entry_node == True) and (delete_sink_node == True):
             graph.remove_nodes_from(path)
@@ -128,11 +206,43 @@ def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
     return(graph)
 
 def std(data):
+    '''Compute the standart devation of the data
+    '''
     return(statistics.stdev(data))
 
 
 def select_best_path(graph, path_list, path_length, weight_avg_list, 
                      delete_entry_node=False, delete_sink_node=False):
+    '''Select the best path in a list
+    
+    Select the best path between the path in a list of path.
+    
+    Arguments
+    ---------
+    graph : DiGraph
+        The graph return by build_graph()
+        
+    path_list : list
+        list of path between nodes
+        
+    path_length : list
+        list containing the length of the path in path_list
+        
+    weight_avg_list : list
+        list containing the average weight of the path in path_list
+        
+    delete_entry_node : Boolean
+        option for delete the starting nodes or not
+        
+    delete_out_node : Boolean
+        option for delete the ending nodes or not
+        
+    Return
+    ------
+    DiGraph
+        Graph without the non best path
+    '''
+    
     best_path = None
     
     if std(weight_avg_list) > 0:
@@ -151,15 +261,51 @@ def select_best_path(graph, path_list, path_length, weight_avg_list,
     return(graph)
 
 def path_average_weight(graph, path):
-    avg_w = statistics.mean([d["weight"] for (u,v,d) in graph.subgraph(path).edges(data=True)])
+    avg_w = statistics.mean([d["weight"] for (u,v,d) in
+                             graph.subgraph(path).edges(data=True)])
+    '''compute the average weight
+    
+    Compute the average weight of some path.
+    
+    Arguments
+    ---------
+    graph : DiGraph
+
+    path : generator
+        path between two nodes
+        
+    return
+    ------
+    int
+        the average weight of path
+    '''
     return(avg_w)
 
 def solve_bubble(graph, ancestor_node, descendant_node):
+    '''solve bubble
+    
+    Solve and remove bublle of the graph.
+    
+    Arguments
+    ---------
+    graph : Digraph
+    
+    ancestor_node : string
+        the common ancestor of nodes in the bubble
+        
+    descendant_node : string
+        the successor of nodes in the bubble
+        
+    Return
+    ------
+    Digraph
+        DiGraph Without the bubble between ancestor and descendant node
+    '''
     path_list = []
     path_length = []
     weight_avg_list = []
     
-    for path in nx.all_simple_paths(graph, source = ancestor_node, target = descendant_node):
+    for path in nx.all_simple_paths(graph, ancestor_node, descendant_node):
 	    path_list.append(path)
 	    path_length.append(len(path))
 	    weight_avg_list.append(path_average_weight(graph, path))
@@ -170,6 +316,21 @@ def solve_bubble(graph, ancestor_node, descendant_node):
     return(graph)
 
 def simplify_bubbles(graph):
+    '''Simplifly the bubbles
+    
+    Check if the Graph conatin bubble and replace them by a simple path.
+    
+    Arguments
+    ---------
+    graph : Digraph
+        DiGraph with or without bubbles
+        
+    Return
+    ------
+    DiGraph
+        DiGraph without bubbles
+    '''
+    
     bubble = False
     for node in list(graph.nodes):
         pred = list(graph.predecessors(node))
@@ -191,6 +352,23 @@ def simplify_bubbles(graph):
            
 
 def solve_entry_tips(graph, starting_nodes):
+    '''Solve entry tips
+    
+    Remove path when a node have several predecessor.
+    
+    Arguments
+    ---------
+    graph : Digraph
+        DiGraph with possible tips
+        
+    starting_nodes : list
+        list of entry_node obtain with get_starting_nodes function
+        
+    Return
+    ------
+    DiGraph
+        DiGraph without entry tips
+    '''
     graph_nodes = list(graph.nodes())
     
     for node in graph_nodes:
@@ -215,6 +393,24 @@ def solve_entry_tips(graph, starting_nodes):
     return(graph)
 
 def solve_out_tips(graph, ending_nodes):
+    '''Solve out tips
+    
+    Remove path when a node have several successors.
+    
+    Arguments
+    ---------
+    graph : Digraph
+        DiGraph with possible tips
+        
+    ending_nodes : list
+        list of ending_node obtain with get_sink_nodes function
+        
+    Return
+    ------
+    DiGraph
+        DiGraph without out tips
+    '''
+    
     graph_nodes = list(graph.nodes())
     
     for node in graph_nodes:
@@ -239,6 +435,19 @@ def solve_out_tips(graph, ending_nodes):
     return(graph)
 
 def get_starting_nodes(graph):
+    '''Get starting nodes
+    
+    Identify the nodes without predecessor.
+    
+    Argument
+    --------
+    graph : DiGraph
+    
+    Return
+    ------
+    list
+        list of starting nodes
+    '''
     node_input = []
 
     for node in (list(graph.nodes)):
@@ -248,6 +457,19 @@ def get_starting_nodes(graph):
     return(node_input)
 
 def get_sink_nodes(graph):
+    '''Get ending nodes
+    
+    Identify the nodes without successor.
+    
+    Argument
+    --------
+    graph : DiGraph
+    
+    Return
+    ------
+    list
+        list of ending nodes
+    '''
     node_output = []
 
     for node in (list(graph.nodes)):
@@ -257,6 +479,23 @@ def get_sink_nodes(graph):
     return(node_output)
 
 def get_contigs(graph, starting_nodes, ending_nodes):
+    '''Build the conting
+    
+    Assembles the kmer to form the conting.
+    
+    Arguments
+    ---------
+    graph : Digraph
+    
+    starting_nodes : list
+    
+    ending_nodes : list
+    
+    Return
+    ------
+    list
+        list of contig and their length
+    '''
     path_list = []
     contig_list = []
     
@@ -283,6 +522,9 @@ def get_contigs(graph, starting_nodes, ending_nodes):
     return(contig_list)
 
 def save_contigs(contigs_list, output_file):
+    '''Save the contigs in a output file
+    '''
+    
     with open(output_file,"w") as out:
         for i in range(0,len(contigs_list)):
             out.write(">contig_{} len={}\n".format(i, contigs_list[i][1]))
